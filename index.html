@@ -744,7 +744,7 @@ a { color: var(--link); text-decoration: none; }
       <x-import component-from-global-scope="And3rdMediaDesignSystem_449b20.Badge" variant="accent" hint-size="auto,28px">
         <span style="display:inline-flex; align-items:center; gap:6px;">
           <span style="width:6px; height:6px; border-radius:50%; background:var(--accent); animation:livePulse 1.6s ease-in-out infinite;"></span>
-          7/4 20:00 開催
+          7/4 21:00 開催
         </span>
       </x-import>
     </div>
@@ -900,6 +900,9 @@ class Component extends DCLogic {
 
     const schedule = raw.map((it, i) => {
       const isVisible = !!visible[i];
+      // 最初の項目(20:00)は開館・準備扱いとして控えめに表示し、
+      // 21:00(本編スタート)との間に点線の区切りを入れる。
+      const isPre = i === 0;
       const steps = (it.steps || []).map((s) => ({
         ...s,
         hasDetail: !!s.detail,
@@ -914,7 +917,11 @@ class Component extends DCLogic {
         steps,
         setRef: this.makeRef(i),
         dotDelay: `${(i % 4) * 0.35}s`,
-        wrapStyle: {},
+        wrapStyle: isPre ? {
+          opacity: 0.62,
+          paddingBottom: 'var(--space-6)',
+          borderBottom: '2px dashed rgba(62,207,142,0.4)',
+        } : {},
         cardStyle: {
           opacity: isVisible ? 1 : 0,
           transform: isVisible ? 'translateY(0)' : 'translateY(28px)',
