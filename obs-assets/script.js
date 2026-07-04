@@ -1,19 +1,29 @@
-// 上部: チーム紹介を一定間隔で自動的に切り替える。
-// 下部: レース中の順位は常時固定表示し、GitHub上のJSONを定期的に取得して更新する。
+// 上部: チーム紹介を一定間隔で自動的に切り替える(data/roster.jsonを定期取得)。
+// 下部: レース中の順位は常時固定表示し、data/race-position.jsonを定期取得する。
 const ROSTER_DURATION = 6000; // 各チームの表示時間(ミリ秒)
+const ROSTER_POLL_INTERVAL = 15000; // チーム紹介データの取得間隔(ミリ秒)
 const RACE_POLL_INTERVAL = 8000; // レース順位の取得間隔(ミリ秒)
 
-const RACE_POSITION_URL =
-  'https://raw.githubusercontent.com/Wadeumix/LGT/preraceschedule/data/race-position.json';
+const BASE_URL = 'https://raw.githubusercontent.com/Wadeumix/LGT/preraceschedule/data';
+const ROSTER_URL = `${BASE_URL}/roster.json`;
+const RACE_POSITION_URL = `${BASE_URL}/race-position.json`;
 
 const rosterTeamName = document.getElementById('rosterTeamName');
 const rosterList = document.getElementById('rosterList');
 const raceOrderList = document.getElementById('raceOrderList');
 
-function renderRoster(rosterIndex) {
-  const roster = ROSTERS[rosterIndex];
-  rosterTeamName.textContent = roster.team;
-  rosterList.innerHTML = roster.members.map((m) => `
+let teams = []; // data/roster.jsonから取得したチーム一覧
+let rosterIndex = 0;
+
+function renderRoster() {
+  if (!teams.length) {
+    rosterTeamName.textContent = '';
+    rosterList.innerHTML = '<li class="placeholder">チーム情報は準備中です</li>';
+    return;
+  }
+  const team = teams[rosterIndex % teams.length];
+  rosterTeamName.textContent = team.team;
+  rosterList.innerHTML = (team.members || []).map((m) => `
     <li>
       <span class="role-tag${m.role === 'CREW' ? ' crew' : ''}">${m.role}</span>
       <span>${m.name}</span>
@@ -21,12 +31,24 @@ function renderRoster(rosterIndex) {
   `).join('');
 }
 
-let rosterIndex = 0;
-
 function cycleRoster() {
-  renderRoster(rosterIndex);
-  rosterIndex = (rosterIndex + 1) % ROSTERS.length;
+  renderRoster();
+  rosterIndex = (rosterIndex + 1) % (teams.length || 1);
   setTimeout(cycleRoster, ROSTER_DURATION);
+}
+
+async function pollRoster() {
+  try {
+    const res = await fetch(`${ROSTER_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      teams = data.teams || [];
+    }
+  } catch (err) {
+    console.error('roster fetch failed', err);
+  } finally {
+    setTimeout(pollRoster, ROSTER_POLL_INTERVAL);
+  }
 }
 
 function renderRacePositions(positions) {
@@ -57,6 +79,8 @@ async function pollRacePositions() {
   }
 }
 
-cycleRoster();
+renderRoster(); // 初期表示は準備中
 renderRacePositions([]); // 初期表示は準備中
+cycleRoster();
+pollRoster();
 pollRacePositions();

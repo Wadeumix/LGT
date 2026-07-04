@@ -1,0 +1,21 @@
+{
+  "teams": [
+    {
+      "team": "TEAM ALPHA",
+      "members": [
+        { "name": "選手A-1", "role": "DRIVER" },
+        { "name": "選手A-2", "role": "DRIVER" },
+        { "name": "メカA", "role": "CREW" }
+      ]
+    },
+    {
+      "team": "TEAM BRAVO",
+      "members": [
+        { "name": "選手B-1", "role": "DRIVER" },
+        { "name": "選手B-2", "role": "DRIVER" },
+        { "name": "メカB", "role": "CREW" }
+      ]
+    }
+  ],
+  "updatedAt": null
+}
