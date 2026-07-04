@@ -19,12 +19,24 @@ html, body {
 
 .overlay {
   width: 720px;
-  margin: 24px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+
+/* 上部: チーム紹介パネル */
+.overlay-team {
+  margin: 24px 24px 14px;
+}
+
+/* 下部: 常時表示のレース順位パネル */
+.overlay-race {
+  margin: 0 24px 24px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
 }
 
 .overlay-header {
@@ -53,6 +65,24 @@ html, body {
   padding: 5px 14px;
 }
 
+.panel-label.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-label.live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff5c5c;
+  animation: livePulse 1.6s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
 /* パネル切り替え(script.jsが .is-active を付け替える) */
 .panel {
   display: none;
@@ -66,40 +96,7 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* --- Leaderboard --- */
-.board {
-  width: 100%;
-  border-collapse: collapse;
-}
-.board thead th {
-  text-align: left;
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: #7f8fa0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-}
-.board .col-rank { width: 70px; }
-.board .col-pts { width: 70px; text-align: right; }
-
-.board tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.board tbody tr:last-child { border-bottom: none; }
-
-.board td {
-  padding: 12px 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-.board td.col-rank { color: var(--accent); font-weight: 900; }
-.board td.col-pts { text-align: right; color: #c3cdd6; font-weight: 700; }
-
-.board tr.rank-1 td.col-rank { color: #ffd166; }
-.board tr.rank-2 td.col-rank { color: #d8dee4; }
-.board tr.rank-3 td.col-rank { color: #d99a5b; }
-
-/* --- Roster --- */
+/* --- チーム紹介 --- */
 .roster-team-name {
   font-size: 26px;
   font-weight: 900;
@@ -141,4 +138,51 @@ html, body {
   background: transparent;
   color: var(--accent);
   border: 1px solid var(--accent);
+}
+
+/* --- レース中の順位(常時表示) --- */
+.race-order {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.race-order li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 19px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 9px 16px;
+}
+
+.race-order .pos {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0b0f14;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.race-order li.p1 .pos { background: #ffd166; }
+.race-order li.p2 .pos { background: #d8dee4; }
+.race-order li.p3 .pos { background: #d99a5b; }
+
+.race-order .team-name { flex: 1; }
+.race-order .gap { font-size: 14px; font-weight: 500; color: #7f8fa0; }
+
+.race-order .placeholder {
+  font-size: 15px;
+  font-weight: 500;
+  color: #7f8fa0;
+  padding: 6px 2px;
 }

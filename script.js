@@ -1,24 +1,10 @@
-// パネルの自動切り替え(リーダーボード → チーム名簿を順番にループ)
-// 表示時間はここで調整できます(ミリ秒)。
-const LEADERBOARD_DURATION = 8000;
-const ROSTER_DURATION = 6000;
+// 上部: チーム紹介を一定間隔で自動的に切り替える。
+// 下部: レース中の順位は常時固定表示(切り替えなし)。
+const ROSTER_DURATION = 6000; // 各チームの表示時間(ミリ秒)
 
-const panelLabel = document.getElementById('panelLabel');
-const panelLeaderboard = document.getElementById('panel-leaderboard');
-const panelRoster = document.getElementById('panel-roster');
-const leaderboardBody = document.getElementById('leaderboardBody');
 const rosterTeamName = document.getElementById('rosterTeamName');
 const rosterList = document.getElementById('rosterList');
-
-function renderLeaderboard() {
-  leaderboardBody.innerHTML = LEADERBOARD.map((row) => `
-    <tr class="rank-${row.rank}">
-      <td class="col-rank">${row.rank}</td>
-      <td class="col-team">${row.team}</td>
-      <td class="col-pts">${row.sp} SP</td>
-    </tr>
-  `).join('');
-}
+const raceOrderList = document.getElementById('raceOrderList');
 
 function renderRoster(rosterIndex) {
   const roster = ROSTERS[rosterIndex];
@@ -33,28 +19,25 @@ function renderRoster(rosterIndex) {
 
 let rosterIndex = 0;
 
-function showLeaderboard() {
-  panelLabel.textContent = 'LEADERBOARD';
-  renderLeaderboard();
-  panelLeaderboard.classList.add('is-active');
-  panelRoster.classList.remove('is-active');
-  setTimeout(showRoster, LEADERBOARD_DURATION);
-}
-
-function showRoster() {
-  panelLabel.textContent = 'TEAM ROSTER';
+function cycleRoster() {
   renderRoster(rosterIndex);
-  panelRoster.classList.add('is-active');
-  panelLeaderboard.classList.remove('is-active');
-
   rosterIndex = (rosterIndex + 1) % ROSTERS.length;
-
-  // 全チーム分ローテーションし終えたらリーダーボードへ戻る。
-  if (rosterIndex === 0) {
-    setTimeout(showLeaderboard, ROSTER_DURATION);
-  } else {
-    setTimeout(showRoster, ROSTER_DURATION);
-  }
+  setTimeout(cycleRoster, ROSTER_DURATION);
 }
 
-showLeaderboard();
+function renderRacePositions() {
+  if (!RACE_POSITIONS.length) {
+    raceOrderList.innerHTML = '<li class="placeholder">順位情報は準備中です</li>';
+    return;
+  }
+  raceOrderList.innerHTML = RACE_POSITIONS.map((row) => `
+    <li class="p${row.pos}">
+      <span class="pos">${row.pos}</span>
+      <span class="team-name">${row.team}</span>
+      <span class="gap">${row.gap || ''}</span>
+    </li>
+  `).join('');
+}
+
+cycleRoster();
+renderRacePositions();
