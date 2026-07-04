@@ -114,7 +114,7 @@ button {
     <h2>GITHUB トークン設定</h2>
     <label for="tokenInput">Fine-grained personal access token (このリポジトリ限定・書き込み権限)</label>
     <input type="password" id="tokenInput" placeholder="github_pat_...">
-    <div class="hint">このブラウザだけに保存されます(localStorage)。他のPCやブラウザでは毎回入力が必要です。</div>
+    <div class="hint">このブラウザだけに保存されます(localStorage)。他のPCで使う場合は、このページのURLの末尾に <code>?token=あなたのトークン</code> を付けたリンクを開けば自動入力されます(信頼できる相手にのみ共有してください)。</div>
   </div>
 
   <div class="section">
@@ -148,6 +148,16 @@ const addRowBtn = document.getElementById('addRowBtn');
 const statusEl = document.getElementById('status');
 
 let currentSha = null;
+
+// URLに ?token=xxxx が付いていれば読み取って保存する。
+// (共有リンク用。URL自体にトークンが残るため、信頼できる相手にだけ共有すること)
+const urlToken = new URLSearchParams(location.search).get('token');
+if (urlToken) {
+  localStorage.setItem('lgt_gh_token', urlToken);
+  // アドレスバーやブラウザ履歴にトークンが残らないよう、URLからパラメータを消す
+  const cleanUrl = location.origin + location.pathname;
+  history.replaceState({}, '', cleanUrl);
+}
 
 tokenInput.value = localStorage.getItem('lgt_gh_token') || '';
 tokenInput.addEventListener('input', () => {
