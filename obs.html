@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>LGT OBS Overlay</title>
+<link rel="stylesheet" href="obs-assets/style.css">
+</head>
+<body>
+
+  <div class="overlay">
+    <header class="overlay-header">
+      <span class="brand">らぶぐらっ<span class="accent">GT</span></span>
+      <span class="panel-label" id="panelLabel">LEADERBOARD</span>
+    </header>
+
+    <!-- Panel 1: Leaderboard -->
+    <section class="panel" id="panel-leaderboard">
+      <table class="board">
+        <thead>
+          <tr>
+            <th class="col-rank">RANK</th>
+            <th class="col-team">TEAM</th>
+            <th class="col-pts">SP</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <!-- rows injected by data.js -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Panel 2: Team roster -->
+    <section class="panel" id="panel-roster">
+      <div class="roster-team-name" id="rosterTeamName">TEAM NAME</div>
+      <ul class="roster-list" id="rosterList">
+        <!-- members injected by data.js -->
+      </ul>
+    </section>
+  </div>
+
+  <script src="obs-assets/data.js"></script>
+  <script src="obs-assets/script.js"></script>
+</body>
+</html>
