@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>LGT 順位管理</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: #0b0f14;
+  color: #f2f5f8;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+.wrap { max-width: 560px; margin: 0 auto; }
+h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+h1 .accent { color: #3ecf8e; }
+.sub { color: #9fb0bf; font-size: 14px; margin-bottom: 28px; }
+
+.section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(62,207,142,0.25);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.section h2 { font-size: 15px; color: #3ecf8e; margin-bottom: 12px; letter-spacing: 0.5px; }
+
+label { display:block; font-size:13px; color:#9fb0bf; margin-bottom:6px; }
+input[type="text"], input[type="password"] {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f2f5f8;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+#orderList { list-style: none; margin-top: 4px; }
+#orderList li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: grab;
+  user-select: none;
+}
+#orderList li.dragging { opacity: 0.4; }
+#orderList li .pos {
+  width: 26px; height: 26px;
+  flex-shrink: 0;
+  display:flex; align-items:center; justify-content:center;
+  background: #3ecf8e; color:#0b0f14;
+  font-weight: 900; font-size: 13px;
+  border-radius: 50%;
+}
+#orderList li .grip { color: #556575; font-size: 16px; }
+#orderList li .team-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f2f5f8;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+}
+#orderList li .team-name-input:focus { outline: 1px solid rgba(62,207,142,0.5); border-radius: 4px; }
+#orderList li .gap-input {
+  width: 90px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #9fb0bf;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.btn-row { display:flex; gap: 10px; margin-top: 16px; }
+button {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+}
+.btn-primary { background: #3ecf8e; color: #0b0f14; flex: 1; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: rgba(255,255,255,0.08); color: #f2f5f8; }
+
+#status { margin-top: 14px; font-size: 13px; min-height: 18px; }
+#status.ok { color: #3ecf8e; }
+#status.err { color: #ff8a80; }
+#status.busy { color: #9fb0bf; }
+
+.hint { font-size: 12px; color: #6c7b88; margin-top: 10px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>らぶぐらっ<span class="accent">GT</span> 順位管理</h1>
+  <p class="sub">ドラッグでチームの順位を並び替え、保存するとOBS表示に反映されます。</p>
+
+  <div class="section">
+    <h2>GITHUB トークン設定</h2>
+    <label for="tokenInput">Fine-grained personal access token (このリポジトリ限定・書き込み権限)</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_...">
+    <div class="hint">このブラウザだけに保存されます(localStorage)。他のPCやブラウザでは毎回入力が必要です。</div>
+  </div>
+
+  <div class="section">
+    <h2>レース順位</h2>
+    <ul id="orderList"></ul>
+    <div class="btn-row">
+      <button class="btn-secondary" id="addRowBtn">+ 行を追加</button>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" id="saveBtn">保存してOBSに反映</button>
+  </div>
+  <div id="status"></div>
+
+  <p class="hint">
+    保存すると GitHub リポジトリ内の <code>data/race-position.json</code> が更新されます。OBS側は数秒おきにこのファイルを読みに行くため、反映まで数秒〜数十秒かかる場合があります。
+  </p>
+</div>
+
+<script>
+const OWNER = 'Wadeumix';
+const REPO = 'LGT';
+const BRANCH = 'preraceschedule';
+const FILE_PATH = 'data/race-position.json';
+
+const tokenInput = document.getElementById('tokenInput');
+const orderList = document.getElementById('orderList');
+const saveBtn = document.getElementById('saveBtn');
+const addRowBtn = document.getElementById('addRowBtn');
+const statusEl = document.getElementById('status');
+
+let currentSha = null;
+
+tokenInput.value = localStorage.getItem('lgt_gh_token') || '';
+tokenInput.addEventListener('input', () => {
+  localStorage.setItem('lgt_gh_token', tokenInput.value);
+});
+
+function setStatus(msg, cls) {
+  statusEl.textContent = msg;
+  statusEl.className = cls || '';
+}
+
+function makeRow(team, gap) {
+  const li = document.createElement('li');
+  li.draggable = true;
+  li.innerHTML = `
+    <span class="pos"></span>
+    <span class="grip">⠿</span>
+    <input type="text" class="team-name-input" value="${team || ''}" placeholder="チーム名">
+    <input type="text" class="gap-input" value="${gap || ''}" placeholder="ギャップ (+1.2s)">
+    <button class="btn-secondary remove-btn" style="padding:6px 10px;">×</button>
+  `;
+  li.querySelector('.remove-btn').addEventListener('click', () => {
+    li.remove();
+    refreshPositions();
+  });
+  attachDragHandlers(li);
+  return li;
+}
+
+function refreshPositions() {
+  [...orderList.children].forEach((li, i) => {
+    li.querySelector('.pos').textContent = i + 1;
+  });
+}
+
+function attachDragHandlers(li) {
+  li.addEventListener('dragstart', () => li.classList.add('dragging'));
+  li.addEventListener('dragend', () => {
+    li.classList.remove('dragging');
+    refreshPositions();
+  });
+}
+
+orderList.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  const dragging = orderList.querySelector('.dragging');
+  if (!dragging) return;
+  const afterEl = [...orderList.querySelectorAll('li:not(.dragging)')].find((el) => {
+    const rect = el.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  });
+  if (afterEl) {
+    orderList.insertBefore(dragging, afterEl);
+  } else {
+    orderList.appendChild(dragging);
+  }
+});
+
+addRowBtn.addEventListener('click', () => {
+  orderList.appendChild(makeRow('', ''));
+  refreshPositions();
+});
+
+async function loadCurrent() {
+  setStatus('読み込み中...', 'busy');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
+      headers: { 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store',
+    });
+    if (res.status === 404) {
+      // ファイル未作成。デフォルト2チームで初期化。
+      orderList.innerHTML = '';
+      orderList.appendChild(makeRow('TEAM ALPHA', ''));
+      orderList.appendChild(makeRow('TEAM BRAVO', ''));
+      refreshPositions();
+      currentSha = null;
+      setStatus('初回設定です。保存すると新規作成されます。', '');
+      return;
+    }
+    const json = await res.json();
+    currentSha = json.sha;
+    const decoded = decodeURIComponent(escape(atob(json.content)));
+    const data = JSON.parse(decoded);
+    orderList.innerHTML = '';
+    (data.positions || []).forEach((p) => orderList.appendChild(makeRow(p.team, p.gap)));
+    refreshPositions();
+    setStatus('読み込み完了', 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus('読み込みエラー: ' + err.message, 'err');
+  }
+}
+
+async function saveOrder() {
+  const token = tokenInput.value.trim();
+  if (!token) {
+    setStatus('GitHubトークンを入力してください', 'err');
+    return;
+  }
+  const positions = [...orderList.children].map((li, i) => ({
+    pos: i + 1,
+    team: li.querySelector('.team-name-input').value.trim(),
+    gap: li.querySelector('.gap-input').value.trim(),
+  })).filter((p) => p.team);
+
+  const payload = { positions, updatedAt: new Date().toISOString() };
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+  saveBtn.disabled = true;
+  setStatus('保存中...', 'busy');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        message: 'Update race position via admin panel',
+        content,
+        branch: BRANCH,
+        ...(currentSha ? { sha: currentSha } : {}),
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'GitHub API エラー');
+    currentSha = json.content.sha;
+    setStatus('保存しました。OBSに反映されます(数秒〜数十秒)', 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus('保存エラー: ' + err.message, 'err');
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+saveBtn.addEventListener('click', saveOrder);
+loadCurrent();
+</script>
+</body>
+</html>
