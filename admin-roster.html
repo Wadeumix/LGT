@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>LGT チーム紹介管理</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: #0b0f14;
+  color: #f2f5f8;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+.wrap { max-width: 620px; margin: 0 auto; }
+h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+h1 .accent { color: #3ecf8e; }
+.sub { color: #9fb0bf; font-size: 14px; margin-bottom: 28px; }
+
+.section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(62,207,142,0.25);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.section h2 { font-size: 15px; color: #3ecf8e; margin-bottom: 12px; letter-spacing: 0.5px; }
+
+label { display:block; font-size:13px; color:#9fb0bf; margin-bottom:6px; }
+input[type="text"], input[type="password"] {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f2f5f8;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+#teamList { list-style: none; }
+
+.team-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  cursor: grab;
+}
+.team-card.dragging { opacity: 0.4; }
+
+.team-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.team-card-head .grip { color: #556575; font-size: 16px; cursor: grab; }
+.team-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  color: #3ecf8e;
+  font-size: 17px;
+  font-weight: 900;
+  font-family: inherit;
+  padding: 4px 2px;
+}
+.team-name-input:focus { outline: none; border-bottom-color: #3ecf8e; }
+
+.remove-team-btn {
+  background: rgba(255,90,90,0.12);
+  color: #ff8a80;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.member-name-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #f2f5f8;
+  font-size: 14px;
+  font-family: inherit;
+}
+.member-role-select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 7px 8px;
+  color: #9fb0bf;
+  font-size: 12px;
+  font-family: inherit;
+}
+.remove-member-btn {
+  background: rgba(255,255,255,0.06);
+  color: #9fb0bf;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.add-member-btn {
+  background: rgba(62,207,142,0.1);
+  color: #3ecf8e;
+  border: 1px dashed rgba(62,207,142,0.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.btn-row { display:flex; gap: 10px; margin-top: 16px; }
+button { font-family: inherit; }
+.btn-primary {
+  background: #3ecf8e; color: #0b0f14; flex: 1;
+  border: none; border-radius: 8px; padding: 12px 20px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  background: rgba(255,255,255,0.08); color: #f2f5f8;
+  border: none; border-radius: 8px; padding: 12px 20px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
+#status { margin-top: 14px; font-size: 13px; min-height: 18px; }
+#status.ok { color: #3ecf8e; }
+#status.err { color: #ff8a80; }
+#status.busy { color: #9fb0bf; }
+
+.hint { font-size: 12px; color: #6c7b88; margin-top: 10px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>らぶぐらっ<span class="accent">GT</span> チーム紹介管理</h1>
+  <p class="sub">チームとメンバーを編集し、並び順がOBSの自動切り替え順になります。</p>
+
+  <div class="section">
+    <h2>GITHUB トークン設定</h2>
+    <label for="tokenInput">Fine-grained personal access token (このリポジトリ限定・書き込み権限)</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_...">
+    <div class="hint">順位管理画面(admin.html)と同じトークンを使い回せます。<code>?token=</code> 付きURLでの共有も同様に使えます。</div>
+  </div>
+
+  <div class="section">
+    <h2>チーム一覧(ドラッグで紹介順を変更)</h2>
+    <ul id="teamList"></ul>
+    <div class="btn-row">
+      <button class="btn-secondary" id="addTeamBtn">+ チームを追加</button>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" id="saveBtn">保存してOBSに反映</button>
+  </div>
+  <div id="status"></div>
+
+  <p class="hint">
+    保存すると GitHub リポジトリ内の <code>data/roster.json</code> が更新されます。OBS側は定期的にこのファイルを読みに行くため、反映まで数秒〜数十秒かかる場合があります。
+  </p>
+</div>
+
+<script>
+const OWNER = 'Wadeumix';
+const REPO = 'LGT';
+const BRANCH = 'preraceschedule';
+const FILE_PATH = 'data/roster.json';
+
+const tokenInput = document.getElementById('tokenInput');
+const teamList = document.getElementById('teamList');
+const saveBtn = document.getElementById('saveBtn');
+const addTeamBtn = document.getElementById('addTeamBtn');
+const statusEl = document.getElementById('status');
+
+let currentSha = null;
+
+const urlToken = new URLSearchParams(location.search).get('token');
+if (urlToken) {
+  localStorage.setItem('lgt_gh_token', urlToken);
+  history.replaceState({}, '', location.origin + location.pathname);
+}
+tokenInput.value = localStorage.getItem('lgt_gh_token') || '';
+tokenInput.addEventListener('input', () => {
+  localStorage.setItem('lgt_gh_token', tokenInput.value);
+});
+
+function setStatus(msg, cls) {
+  statusEl.textContent = msg;
+  statusEl.className = cls || '';
+}
+
+function makeMemberRow(name, role) {
+  const row = document.createElement('div');
+  row.className = 'member-row';
+  row.innerHTML = `
+    <input type="text" class="member-name-input" value="${name || ''}" placeholder="選手名 / メカ名">
+    <select class="member-role-select">
+      <option value="DRIVER"${role === 'DRIVER' ? ' selected' : ''}>DRIVER</option>
+      <option value="CREW"${role === 'CREW' ? ' selected' : ''}>CREW</option>
+    </select>
+    <button class="remove-member-btn">×</button>
+  `;
+  row.querySelector('.remove-member-btn').addEventListener('click', () => row.remove());
+  return row;
+}
+
+function makeTeamCard(team, members) {
+  const card = document.createElement('li');
+  card.className = 'team-card';
+  card.draggable = true;
+  card.innerHTML = `
+    <div class="team-card-head">
+      <span class="grip">⠿</span>
+      <input type="text" class="team-name-input" value="${team || ''}" placeholder="チーム名">
+      <button class="remove-team-btn">チーム削除</button>
+    </div>
+    <div class="member-rows"></div>
+    <button class="add-member-btn">+ メンバー追加</button>
+  `;
+  const memberRows = card.querySelector('.member-rows');
+  (members || []).forEach((m) => memberRows.appendChild(makeMemberRow(m.name, m.role)));
+
+  card.querySelector('.remove-team-btn').addEventListener('click', () => card.remove());
+  card.querySelector('.add-member-btn').addEventListener('click', () => {
+    memberRows.appendChild(makeMemberRow('', 'DRIVER'));
+  });
+
+  card.addEventListener('dragstart', (e) => {
+    if (e.target !== card) return; // 子要素のドラッグ誤爆を防ぐ
+    card.classList.add('dragging');
+  });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+  return card;
+}
+
+teamList.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  const dragging = teamList.querySelector('.dragging');
+  if (!dragging) return;
+  const afterEl = [...teamList.querySelectorAll('.team-card:not(.dragging)')].find((el) => {
+    const rect = el.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  });
+  if (afterEl) {
+    teamList.insertBefore(dragging, afterEl);
+  } else {
+    teamList.appendChild(dragging);
+  }
+});
+
+addTeamBtn.addEventListener('click', () => {
+  teamList.appendChild(makeTeamCard('', [{ name: '', role: 'DRIVER' }]));
+});
+
+async function loadCurrent() {
+  setStatus('読み込み中...', 'busy');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
+      headers: { 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store',
+    });
+    if (res.status === 404) {
+      teamList.innerHTML = '';
+      teamList.appendChild(makeTeamCard('TEAM ALPHA', [
+        { name: '選手A-1', role: 'DRIVER' },
+        { name: '選手A-2', role: 'DRIVER' },
+        { name: 'メカA', role: 'CREW' },
+      ]));
+      currentSha = null;
+      setStatus('初回設定です。保存すると新規作成されます。', '');
+      return;
+    }
+    const json = await res.json();
+    currentSha = json.sha;
+    const decoded = decodeURIComponent(escape(atob(json.content)));
+    const data = JSON.parse(decoded);
+    teamList.innerHTML = '';
+    (data.teams || []).forEach((t) => teamList.appendChild(makeTeamCard(t.team, t.members)));
+    setStatus('読み込み完了', 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus('読み込みエラー: ' + err.message, 'err');
+  }
+}
+
+async function saveRoster() {
+  const token = tokenInput.value.trim();
+  if (!token) {
+    setStatus('GitHubトークンを入力してください', 'err');
+    return;
+  }
+  const teams = [...teamList.children].map((card) => {
+    const team = card.querySelector('.team-name-input').value.trim();
+    const members = [...card.querySelectorAll('.member-row')].map((row) => ({
+      name: row.querySelector('.member-name-input').value.trim(),
+      role: row.querySelector('.member-role-select').value,
+    })).filter((m) => m.name);
+    return { team, members };
+  }).filter((t) => t.team);
+
+  const payload = { teams, updatedAt: new Date().toISOString() };
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+  saveBtn.disabled = true;
+  setStatus('保存中...', 'busy');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        message: 'Update team roster via admin panel',
+        content,
+        branch: BRANCH,
+        ...(currentSha ? { sha: currentSha } : {}),
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'GitHub API エラー');
+    currentSha = json.content.sha;
+    setStatus('保存しました。OBSに反映されます(数秒〜数十秒)', 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus('保存エラー: ' + err.message, 'err');
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+saveBtn.addEventListener('click', saveRoster);
+loadCurrent();
+</script>
+</body>
+</html>
