@@ -2,29 +2,29 @@
   "positions": [
     {
       "pos": 1,
-      "team": "和菓子屋",
+      "team": "只野",
       "gap": ""
     },
     {
       "pos": 2,
-      "team": "ROC",
+      "team": "和菓子屋",
       "gap": ""
     },
     {
       "pos": 3,
-      "team": "ミスティックスペル",
+      "team": "ROC",
       "gap": ""
     },
     {
       "pos": 4,
-      "team": "BRR",
+      "team": "ミスティックスペル",
       "gap": ""
     },
     {
       "pos": 5,
-      "team": "只野",
+      "team": "BRR",
       "gap": ""
     }
   ],
-  "updatedAt": "2026-07-04T07:07:16.322Z"
+  "updatedAt": "2026-07-04T07:07:37.312Z"
 }
