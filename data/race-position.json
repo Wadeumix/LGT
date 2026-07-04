@@ -1,4 +1,30 @@
 {
-  "positions": [],
-  "updatedAt": null
+  "positions": [
+    {
+      "pos": 1,
+      "team": "ROC",
+      "gap": ""
+    },
+    {
+      "pos": 2,
+      "team": "ミスティックスペル",
+      "gap": ""
+    },
+    {
+      "pos": 3,
+      "team": "BRR",
+      "gap": ""
+    },
+    {
+      "pos": 4,
+      "team": "和菓子屋",
+      "gap": ""
+    },
+    {
+      "pos": 5,
+      "team": "只野",
+      "gap": ""
+    }
+  ],
+  "updatedAt": "2026-07-04T07:01:18.254Z"
 }
