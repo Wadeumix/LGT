@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent; /* OBSブラウザソースは背景透過のまま使用 */
+  font-family: 'Noto Sans JP', sans-serif;
+  color: #f2f5f8;
+  overflow: hidden;
+}
+
+:root {
+  --accent: #3ecf8e;
+  --bg-panel: rgba(10, 14, 18, 0.86);
+  --border: rgba(62, 207, 142, 0.35);
+}
+
+.overlay {
+  width: 720px;
+  margin: 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+
+.overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(62,207,142,0.08);
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.brand .accent { color: var(--accent); }
+
+.panel-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+/* パネル切り替え(script.jsが .is-active を付け替える) */
+.panel {
+  display: none;
+  padding: 20px 24px 26px;
+  animation: fadeIn 0.5s ease;
+}
+.panel.is-active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Leaderboard --- */
+.board {
+  width: 100%;
+  border-collapse: collapse;
+}
+.board thead th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #7f8fa0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.board .col-rank { width: 70px; }
+.board .col-pts { width: 70px; text-align: right; }
+
+.board tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.board tbody tr:last-child { border-bottom: none; }
+
+.board td {
+  padding: 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.board td.col-rank { color: var(--accent); font-weight: 900; }
+.board td.col-pts { text-align: right; color: #c3cdd6; font-weight: 700; }
+
+.board tr.rank-1 td.col-rank { color: #ffd166; }
+.board tr.rank-2 td.col-rank { color: #d8dee4; }
+.board tr.rank-3 td.col-rank { color: #d99a5b; }
+
+/* --- Roster --- */
+.roster-team-name {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.roster-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roster-list li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 19px;
+  font-weight: 500;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+
+.roster-list .role-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #0b0f14;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.roster-list .role-tag.crew {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
